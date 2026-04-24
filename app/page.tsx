@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import { useState } from 'react';
+import { track } from '@vercel/analytics';
 import type { InvoiceData } from '@/types/invoice';
 import parzoLogo from '@/assets/images/parzo-logo.png';
 import { extractTextFromPdfFile } from '@/lib/pdf/extract-text-client';
@@ -51,11 +52,13 @@ export default function Home() {
 
   async function handleFile(file: File) {
     setState({ status: 'uploading' });
+    track('upload_pdf_started');
 
     let text: string;
     try {
       text = await extractTextFromPdfFile(file);
     } catch {
+      track('invoice_extraction_error', { reason: 'client_pdf_parse_failed' });
       setState({
         status: 'error',
         message: 'Could not extract text from this PDF. The file may be scanned or image-based.',
@@ -64,12 +67,15 @@ export default function Home() {
     }
 
     if (!text || text.length < 20) {
+      track('invoice_extraction_error', { reason: 'no_text_extracted' });
       setState({
         status: 'error',
         message: 'Could not extract text from this PDF. The file may be scanned or image-based.',
       });
       return;
     }
+
+    track('pdf_text_extracted', { textLength: text.length, fileSize: file.size });
 
     try {
       const res = await fetch('/api/extract-invoice', {
@@ -81,12 +87,15 @@ export default function Home() {
       const json = await res.json();
 
       if (!res.ok) {
+        track('invoice_extraction_error', { reason: json.error ?? 'api_error' });
         setState({ status: 'error', message: json.error ?? 'Something went wrong.' });
         return;
       }
 
+      track('invoice_extraction_success');
       setState({ status: 'success', data: json.data });
     } catch {
+      track('invoice_extraction_error', { reason: 'network_error' });
       setState({ status: 'error', message: 'Could not reach the server. Please try again.' });
     }
   }
@@ -180,6 +189,14 @@ export default function Home() {
         <footer className="border-t border-slate-200/70 pt-10 text-center">
           <p className="text-sm font-medium text-slate-400">
             Built for freelancers and small businesses
+          </p>
+          <p className="mt-2">
+            <a
+              href="/privacy"
+              className="text-xs text-slate-400 underline underline-offset-2 hover:text-slate-600 transition-colors"
+            >
+              Privacy Policy
+            </a>
           </p>
         </footer>
       </div>
