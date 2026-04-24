@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { randomUUID } from 'crypto';
+
+export const runtime = 'nodejs';
 import { extractTextFromPdf } from '@/lib/pdf/extract-text';
 import { extractInvoiceData } from '@/lib/ai/extract-invoice';
 import { isInvoiceLikeText } from '@/lib/utils/validate-invoice-text';
