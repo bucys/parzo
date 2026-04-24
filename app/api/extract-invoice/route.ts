@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { randomUUID } from 'crypto';
-
-export const runtime = 'nodejs';
 import { extractTextFromPdf } from '@/lib/pdf/extract-text';
 import { extractInvoiceData } from '@/lib/ai/extract-invoice';
 import { isInvoiceLikeText } from '@/lib/utils/validate-invoice-text';
 import { log } from '@/lib/monitoring/logger';
+
+export const runtime = 'nodejs';
+export const maxDuration = 30;
 
 export async function POST(request: NextRequest) {
   const requestId = randomUUID();
@@ -36,7 +37,12 @@ export async function POST(request: NextRequest) {
     text = await extractTextFromPdf(buffer);
     log('pdf.parse.success', { requestId, charCount: text.length, durationMs: Date.now() - startTime });
   } catch (err) {
-    log('pdf.parse.failure', { requestId, error: String(err) }, 'error');
+    log('pdf.parse.failure', {
+      requestId,
+      error: err instanceof Error ? err.message : String(err),
+      stack: err instanceof Error ? err.stack : undefined,
+      durationMs: Date.now() - startTime,
+    }, 'error');
     return NextResponse.json(
       { error: 'Could not extract text from this PDF. The file may be scanned or image-based.' },
       { status: 400 },
