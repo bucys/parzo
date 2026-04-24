@@ -1,5 +1,6 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
@@ -48,7 +49,13 @@ const TRUST_ITEMS = [
   },
 ];
 
-export default function Home() {
+interface InvoiceExtractorProps {
+  headline: ReactNode;
+  subtext: string;
+  seoContent?: ReactNode;
+}
+
+export function InvoiceExtractor({ headline, subtext, seoContent }: InvoiceExtractorProps) {
   const [state, setState] = useState<AppState>({ status: 'idle' });
 
   async function handleFile(file: File) {
@@ -108,33 +115,25 @@ export default function Home() {
   return (
     <div className="relative min-h-screen overflow-x-hidden bg-[linear-gradient(180deg,#f5f9ff_0%,#f8fbff_24%,#ffffff_100%)]">
       <div className="relative mx-auto max-w-2xl px-6 pb-28 pt-12">
-        {/* ── Brand ── */}
+
+        {/* Brand */}
         <div className="mb-[3.75rem] flex justify-center">
           <Link href="/" aria-label="Go to Parzo homepage">
-            <Image
-              src={parzoLogo}
-              alt="Parzo"
-              className="h-[7rem] w-auto object-contain"
-              priority
-            />
+            <Image src={parzoLogo} alt="Parzo" className="h-[7rem] w-auto object-contain" priority />
           </Link>
         </div>
 
-        {/* ── Hero ── */}
+        {/* Hero */}
         <div className="mb-12 text-center">
           <h1 className="text-4xl font-bold leading-[1.34] tracking-[-0.022em] text-slate-900 sm:text-5xl">
-            Turn messy invoices into{' '}
-            <span className="bg-gradient-to-r from-sky-500 to-indigo-500 bg-clip-text text-transparent">
-              clean data
-            </span>{' '}
-            instantly
+            {headline}
           </h1>
           <p className="mx-auto mt-5 max-w-[420px] text-base leading-7 text-slate-600">
-            Upload any invoice or receipt PDF and get structured data you can export in seconds.
+            {subtext}
           </p>
         </div>
 
-        {/* ── Dynamic zone: upload / loading / error ── */}
+        {/* Dynamic zone */}
         <div className="mb-3">
           {(state.status === 'idle' || state.status === 'success') && (
             <UploadDropzone onFile={handleFile} />
@@ -145,12 +144,11 @@ export default function Home() {
           )}
         </div>
 
-        {/* Format hint — subtle, SEO-supportive */}
         <p className="mb-7 text-center text-xs text-slate-400">
           Supports PDF invoices and receipts
         </p>
 
-        {/* ── Trust signals ── */}
+        {/* Trust signals */}
         <div className="mb-14 grid grid-cols-3 gap-4 sm:gap-7">
           {TRUST_ITEMS.map((item) => (
             <div key={item.title} className="flex flex-col items-center gap-4 text-center">
@@ -165,30 +163,17 @@ export default function Home() {
           ))}
         </div>
 
-        {/* ── Result card (success only) ── */}
+        {/* Result card */}
         {state.status === 'success' && (
           <div className="mb-14 animate-fade-up">
             <ExtractionResult data={state.data} onReset={reset} />
           </div>
         )}
 
-        {/* ── SEO content block ── */}
-        <section aria-label="About Parzo" className="mb-10 text-center">
-          <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-400">
-            Extract invoice data from PDF
-          </h2>
-          <p className="mx-auto mt-3 max-w-[480px] text-sm leading-relaxed text-slate-400">
-            Parzo reads your invoice or receipt PDF and pulls out structured fields — supplier
-            name, invoice number, date, total amount, and VAT — in seconds. No manual data
-            entry. No account required.
-          </p>
-          <p className="mx-auto mt-2 max-w-[480px] text-sm leading-relaxed text-slate-400">
-            Download results as an Excel spreadsheet or CSV file with one click. Useful for
-            freelancers, accountants, and small businesses who process PDF invoices regularly.
-          </p>
-        </section>
+        {/* SEO content — per-page */}
+        {seoContent}
 
-        {/* ── Footer ── */}
+        {/* Footer */}
         <footer className="border-t border-slate-200/70 pt-10 text-center">
           <p className="text-sm font-medium text-slate-400">
             Built for freelancers and small businesses
@@ -196,12 +181,13 @@ export default function Home() {
           <p className="mt-2">
             <a
               href="/privacy"
-              className="text-xs text-slate-400 underline underline-offset-2 hover:text-slate-600 transition-colors"
+              className="text-xs text-slate-400 underline underline-offset-2 transition-colors hover:text-slate-600"
             >
               Privacy Policy
             </a>
           </p>
         </footer>
+
       </div>
     </div>
   );

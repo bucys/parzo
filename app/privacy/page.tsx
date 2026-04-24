@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import Image from 'next/image';
+import parzoLogo from '@/assets/images/parzo-logo.png';
 
 export const metadata: Metadata = {
   title: 'Privacy Policy – Parzo',
@@ -59,6 +61,16 @@ export default function PrivacyPage() {
   return (
     <div className="min-h-screen bg-[linear-gradient(180deg,#f5f9ff_0%,#f8fbff_24%,#ffffff_100%)]">
       <div className="mx-auto max-w-2xl px-6 pb-24 pt-14">
+        <div className="mb-14 flex justify-center">
+          <Link href="/" aria-label="Go to Parzo homepage">
+            <Image
+              src={parzoLogo}
+              alt="Parzo"
+              className="h-[7rem] w-auto object-contain"
+              priority
+            />
+          </Link>
+        </div>
 
         {/* Back link */}
         <div className="mb-12">
