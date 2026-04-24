@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { InvoiceExtractor } from '@/components/invoice-extractor';
 
 export const metadata: Metadata = {
-  title: 'Extract Invoice Data from PDF (Fast & Simple Tool)',
+  title: 'Extract Invoice Data from PDF (Free Tool, No Signup)',
   description:
     'Extract structured invoice data from PDFs in seconds. Get supplier details, invoice numbers, totals, VAT, and currency ready for Excel or CSV export.',
   alternates: {

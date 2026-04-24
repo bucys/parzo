@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { InvoiceExtractor } from '@/components/invoice-extractor';
 
 export const metadata: Metadata = {
-  title: 'PDF to Excel Converter (No Signup, Instant Results)',
+  title: 'Convert Invoice PDF to Excel (Free, No Signup Tool)',
   description:
     'Convert PDF invoices and receipts to Excel instantly. Extract supplier, invoice number, date, totals, and VAT with no signup required.',
   alternates: {
