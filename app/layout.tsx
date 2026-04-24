@@ -14,6 +14,9 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://parzo.app"),
+  verification: {
+    google: "CFaaEIBemvOq2d6BV0jZsV33Bq-2KbpOZJm67yNIFQY",
+  },
   title: "Parzo – Invoice PDF Extractor | Export to Excel & CSV",
   description:
     "Upload any invoice or receipt PDF and extract structured data instantly — supplier, invoice number, amounts, VAT, and more. Export to Excel or CSV in one click. No account needed.",
