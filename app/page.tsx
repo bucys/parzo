@@ -1,65 +1,170 @@
-import Image from "next/image";
+'use client';
+
+import Image from 'next/image';
+import { useState } from 'react';
+import type { InvoiceData } from '@/types/invoice';
+import parzoLogo from '@/assets/images/parzo-logo.png';
+import { UploadDropzone } from '@/components/upload-dropzone';
+import { LoadingState } from '@/components/loading-state';
+import { ErrorState } from '@/components/error-state';
+import { ExtractionResult } from '@/components/extraction-result';
+
+type AppState =
+  | { status: 'idle' }
+  | { status: 'uploading' }
+  | { status: 'success'; data: InvoiceData }
+  | { status: 'error'; message: string };
+
+const TRUST_ITEMS = [
+  {
+    icon: (
+      <svg className="h-[1.375rem] w-[1.375rem] text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    ),
+    title: 'No signup required',
+    subtitle: 'Start using instantly',
+  },
+  {
+    icon: (
+      <svg className="h-[1.375rem] w-[1.375rem] text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+      </svg>
+    ),
+    title: 'No data stored',
+    subtitle: 'Your files stay private',
+  },
+  {
+    icon: (
+      <svg className="h-[1.375rem] w-[1.375rem] text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+      </svg>
+    ),
+    title: 'Results in seconds',
+    subtitle: 'Fast and accurate',
+  },
+];
 
 export default function Home() {
+  const [state, setState] = useState<AppState>({ status: 'idle' });
+
+  async function handleFile(file: File) {
+    setState({ status: 'uploading' });
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const res = await fetch('/api/extract-invoice', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const json = await res.json();
+
+      if (!res.ok) {
+        setState({ status: 'error', message: json.error ?? 'Something went wrong.' });
+        return;
+      }
+
+      setState({ status: 'success', data: json.data });
+    } catch {
+      setState({ status: 'error', message: 'Could not reach the server. Please try again.' });
+    }
+  }
+
+  function reset() {
+    setState({ status: 'idle' });
+  }
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <div className="relative min-h-screen overflow-x-hidden bg-[linear-gradient(180deg,#f5f9ff_0%,#f8fbff_24%,#ffffff_100%)]">
+      <div className="relative mx-auto max-w-2xl px-6 pb-28 pt-12">
+        {/* ── Brand ── */}
+        <div className="mb-[3.75rem] flex justify-center">
+          <Image
+            src={parzoLogo}
+            alt="Parzo"
+            className="h-[7rem] w-auto object-contain"
+            priority
+          />
+        </div>
+
+        {/* ── Hero ── */}
+        <div className="mb-12 text-center">
+          <h1 className="text-4xl font-bold leading-[1.34] tracking-[-0.022em] text-slate-900 sm:text-5xl">
+            Turn messy invoices into{' '}
+            <span className="bg-gradient-to-r from-sky-500 to-indigo-500 bg-clip-text text-transparent">
+              clean data
+            </span>{' '}
+            instantly
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="mx-auto mt-5 max-w-[420px] text-base leading-7 text-slate-600">
+            Upload any invoice or receipt PDF and get structured data you can export in seconds.
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        {/* ── Dynamic zone: upload / loading / error ── */}
+        <div className="mb-3">
+          {(state.status === 'idle' || state.status === 'success') && (
+            <UploadDropzone onFile={handleFile} />
+          )}
+          {state.status === 'uploading' && <LoadingState />}
+          {state.status === 'error' && (
+            <ErrorState message={state.message} onRetry={reset} />
+          )}
         </div>
-      </main>
+
+        {/* Format hint — subtle, SEO-supportive */}
+        <p className="mb-7 text-center text-xs text-slate-400">
+          Supports PDF invoices and receipts
+        </p>
+
+        {/* ── Trust signals ── */}
+        <div className="mb-14 grid grid-cols-3 gap-4 sm:gap-7">
+          {TRUST_ITEMS.map((item) => (
+            <div key={item.title} className="flex flex-col items-center gap-4 text-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-card-soft ring-1 ring-slate-200/80">
+                {item.icon}
+              </div>
+              <div>
+                <p className="text-[0.84rem] font-semibold text-slate-800">{item.title}</p>
+                <p className="mt-1 text-[0.73rem] leading-5 text-slate-400">{item.subtitle}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* ── Result card (success only) ── */}
+        {state.status === 'success' && (
+          <div className="mb-14 animate-fade-up">
+            <ExtractionResult data={state.data} onReset={reset} />
+          </div>
+        )}
+
+        {/* ── SEO content block ── */}
+        <section aria-label="About Parzo" className="mb-10 text-center">
+          <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-400">
+            Extract invoice data from PDF
+          </h2>
+          <p className="mx-auto mt-3 max-w-[480px] text-sm leading-relaxed text-slate-400">
+            Parzo reads your invoice or receipt PDF and pulls out structured fields — supplier
+            name, invoice number, date, total amount, and VAT — in seconds. No manual data
+            entry. No account required.
+          </p>
+          <p className="mx-auto mt-2 max-w-[480px] text-sm leading-relaxed text-slate-400">
+            Download results as an Excel spreadsheet or CSV file with one click. Useful for
+            freelancers, accountants, and small businesses who process PDF invoices regularly.
+          </p>
+        </section>
+
+        {/* ── Footer ── */}
+        <footer className="border-t border-slate-200/70 pt-10 text-center">
+          <p className="text-sm font-medium text-slate-400">
+            Built for freelancers and small businesses
+          </p>
+        </footer>
+      </div>
     </div>
   );
 }
