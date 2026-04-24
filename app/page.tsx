@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { useState } from 'react';
 import type { InvoiceData } from '@/types/invoice';
 import parzoLogo from '@/assets/images/parzo-logo.png';
+import { extractTextFromPdfFile } from '@/lib/pdf/extract-text-client';
 import { UploadDropzone } from '@/components/upload-dropzone';
 import { LoadingState } from '@/components/loading-state';
 import { ErrorState } from '@/components/error-state';
@@ -51,13 +52,30 @@ export default function Home() {
   async function handleFile(file: File) {
     setState({ status: 'uploading' });
 
-    const formData = new FormData();
-    formData.append('file', file);
+    let text: string;
+    try {
+      text = await extractTextFromPdfFile(file);
+    } catch {
+      setState({
+        status: 'error',
+        message: 'Could not extract text from this PDF. The file may be scanned or image-based.',
+      });
+      return;
+    }
+
+    if (!text || text.length < 20) {
+      setState({
+        status: 'error',
+        message: 'Could not extract text from this PDF. The file may be scanned or image-based.',
+      });
+      return;
+    }
 
     try {
       const res = await fetch('/api/extract-invoice', {
         method: 'POST',
-        body: formData,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text }),
       });
 
       const json = await res.json();

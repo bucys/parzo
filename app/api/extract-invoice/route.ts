@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { randomUUID } from 'crypto';
-import { extractTextFromPdf } from '@/lib/pdf/extract-text';
 import { extractInvoiceData } from '@/lib/ai/extract-invoice';
 import { isInvoiceLikeText } from '@/lib/utils/validate-invoice-text';
 import { log } from '@/lib/monitoring/logger';
@@ -12,44 +11,23 @@ export async function POST(request: NextRequest) {
   const requestId = randomUUID();
   const startTime = Date.now();
 
-  let formData: FormData;
+  let text: string;
   try {
-    formData = await request.formData();
+    const body = await request.json();
+    text = typeof body?.text === 'string' ? body.text.trim() : '';
   } catch {
     return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
   }
 
-  const file = formData.get('file');
-  if (!(file instanceof File)) {
-    return NextResponse.json({ error: 'No file provided' }, { status: 400 });
-  }
-
-  if (file.type !== 'application/pdf') {
-    return NextResponse.json({ error: 'Only PDF files are supported' }, { status: 400 });
-  }
-
-  log('upload.start', { requestId, fileSize: file.size, mimeType: file.type });
-
-  const buffer = Buffer.from(await file.arrayBuffer());
-
-  let text: string;
-  try {
-    text = await extractTextFromPdf(buffer);
-    log('pdf.parse.success', { requestId, charCount: text.length, durationMs: Date.now() - startTime });
-  } catch (err) {
-    log('pdf.parse.failure', {
-      requestId,
-      error: err instanceof Error ? err.message : String(err),
-      stack: err instanceof Error ? err.stack : undefined,
-      durationMs: Date.now() - startTime,
-    }, 'error');
+  if (!text) {
     return NextResponse.json(
-      { error: 'Could not extract text from this PDF. The file may be scanned or image-based.' },
+      { error: 'Could not extract text from this PDF.' },
       { status: 400 },
     );
   }
 
-  // Pre-check: skip OpenAI if the text doesn't look like a financial document
+  log('text.receive.start', { requestId, charCount: text.length });
+
   if (!isInvoiceLikeText(text)) {
     log('invoice.detect.failure', { requestId, charCount: text.length }, 'warn');
     return NextResponse.json(
@@ -57,6 +35,8 @@ export async function POST(request: NextRequest) {
       { status: 400 },
     );
   }
+
+  log('text.receive.success', { requestId, charCount: text.length });
 
   const aiStart = Date.now();
   let data;
@@ -71,7 +51,6 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Post-check: all core fields null means the AI found nothing useful
   if (
     data.supplierName === null &&
     data.invoiceNumber === null &&
